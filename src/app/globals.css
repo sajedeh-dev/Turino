@@ -1,26 +1,368 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* Dark mode follows a class on <html>, set before paint by the theme script in layout.tsx. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens — modern, minimal, white.
+ * One accent (teal) for actions and active states; everything else is ink on white,
+ * separated by a very light surface or a hairline.
+ */
+@theme {
+  --color-canvas: #ffffff;
+  --color-ink: #0f172a;
+  --color-ink-soft: #475569;
+  --color-muted: #64748b;
+  --color-faint: #94a3b8;
+  --color-line: #eef0f3;
+  --color-line-strong: #e2e8f0;
+  --color-surface: #f8fafc;
+  --color-accent: #0f766e;
+  --color-accent-hover: #0d5f58;
+  --color-accent-soft: #e7f5f2;
+  --color-on-accent: #ffffff;
+  --color-warning: #b45309;
+  --color-warning-soft: #fef3e2;
+  --color-danger: #b42318;
+
+  --font-sans: var(--font-vazirmatn), system-ui, sans-serif;
+
+  /* Type steps. */
+  --text-small: 0.875rem;
+  --text-small--line-height: 1.7;
+  --text-body: 1rem;
+  --text-body--line-height: 1.9;
+  --text-lead: 1.125rem;
+  --text-lead--line-height: 1.9;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.5;
+  --text-head: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --text-head--line-height: 1.4;
+  --text-display: clamp(2rem, 1.3rem + 2.6vw, 3.25rem);
+  --text-display--line-height: 1.25;
+
+  --radius-4xl: 1.75rem;
+
+  --shadow-float: 0 12px 32px rgb(15 23 42 / 0.06);
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/*
+ * Dark theme: the same roles, re-valued. Utilities read these variables, so every
+ * component switches without a single dark: class.
+ */
+.dark {
+  --color-canvas: #0b1220;
+  --color-ink: #e2e8f0;
+  --color-ink-soft: #cbd5e1;
+  --color-muted: #94a3b8;
+  --color-faint: #64748b;
+  --color-line: #1c2638;
+  --color-line-strong: #2a3649;
+  --color-surface: #121b2d;
+  --color-accent: #2dd4bf;
+  --color-accent-hover: #5eead4;
+  --color-accent-soft: #0f2f2c;
+  --color-on-accent: #042f2e;
+  --color-warning: #fbbf24;
+  --color-warning-soft: #3a2a0c;
+  --color-danger: #f87171;
+  --shadow-float: 0 12px 32px rgb(0 0 0 / 0.35);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* The page's one content width and side padding. */
+@utility container-page {
+  width: 100%;
+  max-width: 75rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    background: var(--color-canvas);
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+
+  body {
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body);
+    line-height: 1.9;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background: var(--color-accent-soft);
+    color: var(--color-ink);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Numbers that line up in columns (prices, times, seats). */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/*
+ * Motion. Content is visible by default; it only starts hidden once script has run
+ * (html.motion-ready), so a page without JavaScript never loses its content.
+ */
+@layer utilities {
+  .motion-ready [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity 600ms var(--ease-out-soft),
+      transform 600ms var(--ease-out-soft);
+    transition-delay: calc(var(--reveal-index, 0) * 70ms);
+  }
+
+  .motion-ready [data-reveal="shown"] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* Custom dropdowns (components/ui/select.tsx): open with a short scale-and-fade from the trigger. */
+  .select-content {
+    transform-origin: var(--radix-select-content-transform-origin);
+  }
+
+  .select-content[data-state="open"] {
+    animation: select-in 160ms var(--ease-out-soft);
+  }
+
+  @keyframes select-in {
+    from {
+      opacity: 0;
+      transform: translateY(-4px) scale(0.98);
+    }
+  }
+
+  /* ---------- Landing page motion ---------- */
+
+  /* Hero entrance: plain CSS, so it plays on first paint and never hides content if JS fails. */
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+      filter: blur(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: none;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .hero-word {
+    display: inline-block;
+    animation: rise-in 0.8s var(--ease-out-soft) both;
+    animation-delay: calc(120ms + var(--i, 0) * 80ms);
+  }
+
+  .hero-rise {
+    animation: rise-in 0.8s var(--ease-out-soft) both;
+    animation-delay: calc(var(--i, 0) * 90ms);
+  }
+
+  .hero-fade {
+    animation: fade-in 1.2s ease-out both;
+  }
+
+  /* Ken Burns: the hero photo settles slowly, like a camera easing back. */
+  @keyframes ken-burns {
+    from {
+      transform: scale(1.16);
+    }
+    to {
+      transform: scale(1.06);
+    }
+  }
+
+  .hero-ken-burns {
+    animation: ken-burns 16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Scroll progress: --progress (0–1) is set by ScrollProgress. RTL, so it grows from the right. */
+  .scroll-progress-bar {
+    transform: scaleX(var(--progress, 0));
+  }
+
+  .scroll-progress-plane {
+    right: calc(var(--progress, 0) * 100%);
+    opacity: min(1, calc(var(--progress, 0) * 40));
+    /* The glyph points up-right; turn it to fly left, along the bar. */
+    transform: translate(50%, -50%) rotate(-135deg);
+  }
+
+  /* Cards that pop as well as rise (Reveal variant="pop"). Only while still hidden. */
+  .motion-ready [data-reveal=""][data-reveal-variant="pop"] {
+    transform: translateY(28px) scale(0.96);
+  }
+
+  /* Line icons that draw themselves when their section is revealed. */
+  .motion-ready [data-reveal] .icon-draw :is(path, circle, rect) {
+    stroke-dasharray: 80;
+    stroke-dashoffset: 80;
+  }
+
+  .motion-ready [data-reveal="shown"] .icon-draw :is(path, circle, rect) {
+    animation: icon-draw 1.4s var(--ease-out-soft) forwards;
+    animation-delay: calc(200ms + var(--reveal-index, 0) * 120ms);
+  }
+
+  @keyframes icon-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  /* A small "ring" every few seconds on the phone call to action. */
+  @keyframes phone-ring {
+    0%,
+    12%,
+    100% {
+      transform: rotate(0);
+    }
+    2% {
+      transform: rotate(-16deg);
+    }
+    4% {
+      transform: rotate(14deg);
+    }
+    6% {
+      transform: rotate(-12deg);
+    }
+    8% {
+      transform: rotate(10deg);
+    }
+    10% {
+      transform: rotate(-4deg);
+    }
+  }
+
+  .phone-ring {
+    animation: phone-ring 4s ease-in-out 1.5s infinite;
+  }
+
+  /* Section headings: an accent underline that draws in as the heading scrolls into view.
+     Scroll-driven where supported; elsewhere the underline is simply there. */
+  .heading-draw {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 0.4rem;
+  }
+
+  .heading-draw::after {
+    content: "";
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: 0;
+    width: 2.75rem;
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--color-accent);
+    transform-origin: right;
+  }
+
+  @supports (animation-timeline: view()) {
+    .heading-draw::after {
+      animation: underline-draw linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 30%;
+    }
+  }
+
+  @keyframes underline-draw {
+    from {
+      transform: scaleX(0);
+    }
+  }
+
+  /* The next-departure card waits, hidden from first paint, for the paper plane to land on it
+     (FlightPath reveals it). Only where the flight runs: wide screens with motion allowed.
+     Safety net: if the flight never starts, the card shows itself after 6 seconds anyway. */
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    [data-flight-end] {
+      opacity: 0;
+      animation: flight-card-fallback 0.4s ease-out 6s forwards;
+    }
+  }
+
+  @keyframes flight-card-fallback {
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* The landed flight route: its dots drift slowly along, like a live route on a map. */
+  @keyframes flight-route-drift {
+    to {
+      stroke-dashoffset: -24.2;
+    }
+  }
+
+  .flight-route-drift {
+    animation: flight-route-drift 1.6s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .select-content[data-state="open"],
+    .flight-route-drift,
+    .hero-word,
+    .hero-rise,
+    .hero-fade,
+    .hero-ken-burns,
+    .phone-ring,
+    .heading-draw::after {
+      animation: none;
+    }
+
+    .hero-ken-burns {
+      transform: scale(1.06);
+    }
+
+    .scroll-progress {
+      display: none;
+    }
+
+    .motion-ready [data-reveal] .icon-draw :is(path, circle, rect) {
+      stroke-dasharray: none;
+      stroke-dashoffset: 0;
+      animation: none;
+    }
+
+    .motion-ready [data-reveal] {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
 }
