@@ -169,13 +169,7 @@ Browser ──(HttpOnly cookie)──▶ Next.js /api routes ──(Bearer token
   dates. The conversion in `src/lib/jalali.ts` needs no dependency.
 - The checkout form is pre-filled from the saved profile.
 
-## Roadmap
 
-- [x] Phase 1: project setup, architecture, design system, home, tour list and tour details on mock data
-- [x] Phase 2: tour endpoints (`GET /tour` with origin/destination/date filters, `GET /tour/:id`)
-- [x] Phase 3a: OTP login, server-side token refresh (BFF, HttpOnly cookies), route guard, sign-out
-- [x] Phase 3b: editable profile (account, personal, bank), my tours, transactions
-- [x] Phase 4: basket, passenger form, order and payment
 
 ## Credits
 
